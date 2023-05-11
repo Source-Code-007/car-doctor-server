@@ -25,6 +25,9 @@ const client = new MongoClient(uri, {
   }
 });
 
+const carDoctorDB = client.db('car-doctor-DB')
+const servicesCollection = carDoctorDB.collection('services-collection')
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -32,9 +35,15 @@ async function run() {
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+    app.get('/services', async(req, res)=>{
+    const result = await servicesCollection.find({}).toArray()
+    res.send(result)
+    })
+
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
