@@ -13,7 +13,7 @@ app.get('/', (req,res)=>{
 })
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -39,6 +39,13 @@ async function run() {
     app.get('/services', async(req, res)=>{
     const result = await servicesCollection.find({}).toArray()
     res.send(result)
+    })
+
+    app.get('/services/:id', async(req,res)=>{
+      const id = req.params.id
+      const query = {_id : new ObjectId(id)}
+      const result = await servicesCollection.findOne(query)
+      res.send(result)
     })
 
   } finally {
