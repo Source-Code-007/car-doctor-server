@@ -29,9 +29,6 @@ const client = new MongoClient(uri, {
   }
 });
 
-const carDoctorDB = client.db('car-doctor-DB')
-const servicesCollection = carDoctorDB.collection('services-collection')
-const bookingCollection = carDoctorDB.collection('booking-collection')
 
 async function run() {
   try {
@@ -39,15 +36,20 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
+    
+    const carDoctorDB = client.db('car-doctor-DB')
+    const servicesCollection = carDoctorDB.collection('services-collection')
+    const bookingCollection = carDoctorDB.collection('booking-collection')
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
+    // create booking
     app.post('/booking', async (req, res) => {
       const order = req.body
       const result = await bookingCollection.insertOne(order)
       res.send(result)
     })
 
-    //some booking data read via email
+    //some booking data read via logged in user's email
     app.get('/booking', async (req, res) => {
       let query = {}
       if (req.query?.email) {
@@ -59,7 +61,7 @@ async function run() {
 
     // update booking data (add confirm status)
     app.patch('/booking/:id', async (req, res) => {
-      const {status} = req.body
+      const { status } = req.body
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const updateDoc = {
@@ -71,11 +73,13 @@ async function run() {
       res.send(result)
     })
 
+    // get all services data
     app.get('/services', async (req, res) => {
       const result = await servicesCollection.find({}).toArray()
       res.send(result)
     })
 
+    // get specific service data via id
     app.get('/services/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
@@ -83,6 +87,7 @@ async function run() {
       res.send(result)
     })
 
+    // delete booking via id
     app.delete(`/booking/:id`, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
