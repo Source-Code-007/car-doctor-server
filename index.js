@@ -67,7 +67,6 @@ async function run() {
           status
         },
       };
-
       const result = await bookingCollection.updateOne(query, updateDoc)
       res.send(result)
     })
