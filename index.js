@@ -16,6 +16,21 @@ app.get('/', (req, res) => {
 })
 
 
+// JWT validation -***-***-***-
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization
+  if (!token) {
+    return res.status(403).send({ error: true, message: 'unauthorized user' })
+  }
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded)=>{
+    if (err) {
+      return res.status(403).send({ error: true, message: 'unauthorized user' })
+    }
+    // req.decoded = decoded
+    next()
+  })
+}
+
 // for node version 4.1 or later
 // const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
 // for node version 2.2.12 or later
@@ -37,18 +52,18 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    
+
     const carDoctorDB = client.db('car-doctor-DB')
     const servicesCollection = carDoctorDB.collection('services-collection')
     const bookingCollection = carDoctorDB.collection('booking-collection')
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     // for json web token
-    app.post('/jwt', (req, res)=>{
+    app.post('/jwt', (req, res) => {
       const user = req.body
-      const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
-      console.log(token);
-      res.send({token})
+      const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: '1h' })
+      // console.log(token);
+      res.send({ token })
     })
 
     // create booking
@@ -59,7 +74,8 @@ async function run() {
     })
 
     //some booking data read via logged in user's email
-    app.get('/booking', async (req, res) => {
+    app.get('/booking', verifyToken, async (req, res) => {
+      // console.log('came back after verifying JWT token');
       let query = {}
       if (req.query?.email) {
         query = { email: req.query.email }
@@ -88,9 +104,9 @@ async function run() {
       res.send(result)
     })
     // get single services data
-    app.get('services/:id', async(req,res)=>{
+    app.get('services/:id', async (req, res) => {
       const id = req.params.id
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await servicesCollection.findOne(query)
       res.send(result)
     })
@@ -106,6 +122,7 @@ async function run() {
     // delete booking via id
     app.delete(`/booking/:id`, async (req, res) => {
       const id = req.params.id
+      console.log(req.authorization);
       const query = { _id: new ObjectId(id) }
       const result = await bookingCollection.deleteOne(query)
       res.send(result)
