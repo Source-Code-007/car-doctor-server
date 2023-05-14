@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express()
+const jwt = require('jsonwebtoken')
 const port = process.env.port || 8000
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -42,6 +43,14 @@ async function run() {
     const bookingCollection = carDoctorDB.collection('booking-collection')
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
+    // for json web token
+    app.post('/jwt', (req, res)=>{
+      const user = req.body
+      const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
+      console.log(token);
+      res.send({token})
+    })
+
     // create booking
     app.post('/booking', async (req, res) => {
       const order = req.body
@@ -76,6 +85,13 @@ async function run() {
     // get all services data
     app.get('/services', async (req, res) => {
       const result = await servicesCollection.find({}).toArray()
+      res.send(result)
+    })
+    // get single services data
+    app.get('services/:id', async(req,res)=>{
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await servicesCollection.findOne(query)
       res.send(result)
     })
 
