@@ -22,7 +22,7 @@ const verifyToken = (req, res, next) => {
   if (!token) {
     return res.status(403).send({ error: true, message: 'unauthorized user' })
   }
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded)=>{
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
       return res.status(403).send({ error: true, message: 'unauthorized user' })
     }
@@ -98,11 +98,17 @@ async function run() {
       res.send(result)
     })
 
-    // get all services data
+    // get all services data (with search and sorting)
     app.get('/services', async (req, res) => {
-      const result = await servicesCollection.find({}).toArray()
+      const { sort, search } = req.query
+      let find = {}
+      if (search) {
+        find = { title: { $regex: search, $options: 'i' } }
+      }
+      const result = await servicesCollection.find(find).toArray()
       res.send(result)
     })
+
     // get single services data
     app.get('services/:id', async (req, res) => {
       const id = req.params.id
